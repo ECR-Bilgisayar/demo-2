@@ -50,13 +50,26 @@ export default function EventRegistrationPage() {
     setIsSubmitting(true);
     try {
       await pb.collection('event_registrations').create(formData, { $autoCancel: false });
+
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'E-posta gönderimi sırasında bir hata oluştu.');
+      }
+
       setFormSuccess(true);
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
       setFormData({ ad_soyad: '', email: '', telefon: '', sirket_unvan: '', katilim_nedeni: '', kvkk_onay: false });
+      toast.success('Kayıt başarılı, onay e-postanız gönderildi.', { position: 'bottom-center' });
     } catch (error) {
       console.error(error);
-      toast.error('Bir hata oluştu. Lütfen tekrar deneyiniz.', { position: 'bottom-center' });
+      toast.error(error.message || 'Bir hata oluştu. Lütfen tekrar deneyiniz.', { position: 'bottom-center' });
     } finally {
       setIsSubmitting(false);
     }
