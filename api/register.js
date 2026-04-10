@@ -1,7 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
 import sendgrid from '@sendgrid/mail';
-import QRCode from 'qrcode';
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'info@etkinlikbilgisayar.com';
@@ -15,7 +14,8 @@ const imageAttachments = async () => {
   const assets = [
     { filename: 'Email-logo-top.jpg', type: 'image/jpeg', cid: 'logo' },
     { filename: 'Email-body-stars.jpg', type: 'image/jpeg', cid: 'bodyStars' },
-    { filename: '425217-HIB-Animation-Email.gif', type: 'image/gif', cid: 'heroGif' }
+    { filename: '425217-HIB-Animation-Email.gif', type: 'image/gif', cid: 'heroGif' },
+    { filename: 'qr-static.png', type: 'image/png', cid: 'qrCode' }
   ];
 
   return Promise.all(
@@ -31,22 +31,6 @@ const imageAttachments = async () => {
       };
     })
   );
-};
-
-const qrAttachment = async (payload) => {
-  const qrDataUrl = await QRCode.toDataURL(JSON.stringify(payload), {
-    type: 'image/png',
-    margin: 1,
-    width: 280,
-  });
-  const base64 = qrDataUrl.split(',')[1];
-  return {
-    content: base64,
-    filename: 'registration-qr.png',
-    type: 'image/png',
-    disposition: 'inline',
-    content_id: 'qrCode',
-  };
 };
 
 const sanitize = (value) => String(value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
