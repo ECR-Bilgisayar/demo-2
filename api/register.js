@@ -118,8 +118,9 @@ const createHtml = ({ ad_soyad, email, telefon, sirket_unvan, katilim_nedeni }) 
 
 const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'application/json');
 };
 
 export default async function handler(req, res) {
@@ -129,9 +130,13 @@ export default async function handler(req, res) {
     return res.status(204).end();
   }
 
+  if (req.method === 'HEAD' || req.method === 'GET') {
+    return res.status(200).json({ ok: true, method: req.method });
+  }
+
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST, OPTIONS');
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.setHeader('Allow', 'GET, HEAD, POST, OPTIONS');
+    return res.status(405).json({ error: 'Method not allowed', method: req.method });
   }
 
   if (!SENDGRID_API_KEY) {
