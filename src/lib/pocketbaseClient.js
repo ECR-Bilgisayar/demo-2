@@ -1,5 +1,6 @@
 import PocketBase from 'pocketbase';
 
-const pb = new PocketBase(import.meta.env.VITE_POCKETBASE_URL || 'http://127.0.0.1:8090');
-
+const pocketbaseUrl = import.meta.env.VITE_POCKETBASE_URL;
+const pb = pocketbaseUrl ? new PocketBase(pocketbaseUrl) : null;
+export const isPocketbaseEnabled = Boolean(pb);
 export default pb;

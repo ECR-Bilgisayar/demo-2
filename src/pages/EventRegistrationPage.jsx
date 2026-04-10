@@ -9,7 +9,7 @@ import { ParticleBackground } from '@/components/ParticleBackground.jsx';
 import { FloatingInput, FloatingTextarea, Custom3DCheckbox, SubmitButton } from '@/components/FormComponents.jsx';
 import { ConfettiAnimation } from '@/components/ConfettiAnimation.jsx';
 import { Easing } from '@/lib/animationConfig.js';
-import pb from '@/lib/pocketbaseClient';
+import pb, { isPocketbaseEnabled } from '@/lib/pocketbaseClient';
 import { toast } from 'sonner';
 
 export default function EventRegistrationPage() {
@@ -48,8 +48,17 @@ export default function EventRegistrationPage() {
     }
 
     setIsSubmitting(true);
+    let pocketbaseSaved = false;
+
     try {
-      await pb.collection('event_registrations').create(formData, { $autoCancel: false });
+      if (isPocketbaseEnabled && pb) {
+        try {
+          await pb.collection('event_registrations').create(formData, { $autoCancel: false });
+          pocketbaseSaved = true;
+        } catch (createError) {
+          console.warn('PocketBase kayıt hatası:', createError);
+        }
+      }
 
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -66,10 +75,16 @@ export default function EventRegistrationPage() {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
       setFormData({ ad_soyad: '', email: '', telefon: '', sirket_unvan: '', katilim_nedeni: '', kvkk_onay: false });
-      toast.success('Kayıt başarılı, onay e-postanız gönderildi.', { position: 'bottom-center' });
+
+      if (isPocketbaseEnabled && !pocketbaseSaved) {
+        toast.success('Onay e-postası gönderildi. Kayıt veritabanına bağlanılamadı, lütfen sunucu ayarlarını kontrol edin.', { position: 'bottom-center' });
+      } else {
+        toast.success('Kayıt başarılı, onay e-postanız gönderildi.', { position: 'bottom-center' });
+      }
     } catch (error) {
       console.error(error);
-      toast.error(error.message || 'Bir hata oluştu. Lütfen tekrar deneyiniz.', { position: 'bottom-center' });
+      const message = error?.message || 'Bir hata oluştu. Lütfen tekrar deneyiniz.';
+      toast.error(message, { position: 'bottom-center' });
     } finally {
       setIsSubmitting(false);
     }
