@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import sendgrid from '@sendgrid/mail';
+import QRCode from 'qrcode';
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'info@etkinlikbilgisayar.com';
@@ -30,6 +31,22 @@ const imageAttachments = async () => {
       };
     })
   );
+};
+
+const qrAttachment = async (payload) => {
+  const qrDataUrl = await QRCode.toDataURL(JSON.stringify(payload), {
+    type: 'image/png',
+    margin: 1,
+    width: 280,
+  });
+  const base64 = qrDataUrl.split(',')[1];
+  return {
+    content: base64,
+    filename: 'registration-qr.png',
+    type: 'image/png',
+    disposition: 'inline',
+    content_id: 'qrCode',
+  };
 };
 
 const sanitize = (value) => String(value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -71,6 +88,14 @@ const createHtml = ({ ad_soyad, email, telefon, sirket_unvan, katilim_nedeni }) 
                 </table>
                 <p style="margin:0 0 24px;font-size:16px;line-height:1.75;color:#cbd5e1;">Bilgileriniz etkinlik ekibimiz tarafından incelenecek ve kısa süre içinde size dönüş yapılacaktır. Bu e-posta'nın bir kopyası ayrıca bilgi amaçlı olarak info@etkinlikbilgisayar.com adresine gönderilmiştir.</p>
                 <p style="margin:0;font-size:16px;line-height:1.75;color:#cbd5e1;">Sorularınız için lütfen bu e-postaya cevap verin veya bizimle iletişime geçin.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 24px;color:#f8fafc;">
+                <div style="background:#111827;border-radius:22px;padding:20px;text-align:center;">
+                  <p style="margin:0 0 14px;font-size:16px;color:#94a3b8;">Kişiye özel QR kodunuzu aşağıda bulabilirsiniz:</p>
+                  <img src="cid:qrCode" alt="Kişiye özel QR kod" width="220" style="display:block;margin:0 auto;max-width:100%;height:auto;border-radius:18px;background:#ffffff;padding:10px;" />
+                </div>
               </td>
             </tr>
             <tr>
